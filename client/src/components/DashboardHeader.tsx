@@ -20,7 +20,7 @@ export function DashboardHeader({ connectionStatus }: { connectionStatus: string
 
   const triggerChaos = async (chaosMode: string) => {
     try {
-      await fetch('http://localhost:3000/api/chaos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: chaosMode }) });
+      await fetch('https://vitalhost-api.onrender.com/api/chaos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: chaosMode }) });
     } catch (err) { console.error('Failed chaos:', err); }
   };
 
@@ -29,7 +29,7 @@ export function DashboardHeader({ connectionStatus }: { connectionStatus: string
     setMode(newMode);
     clearHistory();
     try {
-      await fetch('http://localhost:3000/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: newMode }) });
+      await fetch('https://vitalhost-api.onrender.com/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: newMode }) });
     } catch (err) { console.error('Failed to switch mode:', err); }
   };
 
@@ -37,7 +37,7 @@ export function DashboardHeader({ connectionStatus }: { connectionStatus: string
     setIsFetchingDvr(true);
     setActiveDvrRes(resLabel);
     
-    let url = `http://localhost:3000/api/history?hours=${hours}`;
+    let url = `https://vitalhost-api.onrender.com/api/history?hours=${hours}`;
     
     if (mode === 'dvr' && dvr.data.length > 0 && hours < 24) {
       const anchorTime = dvr.data[dvr.currentIndex].timestamp;

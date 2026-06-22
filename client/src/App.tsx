@@ -15,7 +15,7 @@ function App() {
     let reconnectTimer: ReturnType<typeof setTimeout>;
 
     const connect = () => {
-      ws = new WebSocket('ws://localhost:3000');
+      ws = new WebSocket('wss://vitalhost-api.onrender.com');
       ws.onopen = () => setConnectionStatus('🟢 Live (1Hz)');
       
       ws.onmessage = (event) => {

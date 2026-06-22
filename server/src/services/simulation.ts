@@ -50,7 +50,6 @@ const drift = (val: number, min: number, max: number, maxVariance: number) => {
 export const generateSimulatedMetrics = (): TelemetryPayload => {
   const now = Date.now();
   
-  // 1. BASELINE DRIFT (Always calculate a healthy baseline first)
   let cpuLoadTarget = drift(0.15, 0.05, 0.35, 0.1); 
   currentHeapUsed = drift(currentHeapUsed, 50 * 1024 * 1024, 150 * 1024 * 1024, 5 * 1024 * 1024);
   currentEventLoopLag = drift(currentEventLoopLag, 0.5, 5, 1);
@@ -58,31 +57,23 @@ export const generateSimulatedMetrics = (): TelemetryPayload => {
   currentP99 = drift(currentP99, 15, 60, 5);
   currentHttpConns = drift(currentHttpConns, 50, 150, 10);
 
-  // 2. THE BUTTERFLY EFFECT (Chaos interconnectivity)
   if (activeChaos === 'memory_leak') {
     currentHeapUsed += (12 * 1024 * 1024) + (Math.random() * 5 * 1024 * 1024);
-    // GC Panic: CPU works harder to clean up the leak, event loop stutters
     cpuLoadTarget = drift(0.45, 0.35, 0.60, 0.1);
     currentEventLoopLag = drift(currentEventLoopLag + 5, 5, 25, 2);
-    
   } else if (activeChaos === 'cpu_spike') {
     cpuLoadTarget = drift(0.95, 0.85, 0.99, 0.10); 
     currentEventLoopLag = drift(currentEventLoopLag, 150, 500, 100); 
-    // Blocked Thread: If the event loop lags by 500ms, P99 latency MUST mirror it
     currentP99 = currentEventLoopLag + drift(50, 20, 100, 10);
-    
   } else if (activeChaos === 'high_traffic') {
     currentRps = drift(currentRps, 500, 1200, 150); 
     currentHttpConns = drift(currentHttpConns, 400, 800, 50);
     currentP99 = drift(currentP99, 150, 600, 100); 
-    // Processing Cost: 1200 RPS requires heavy CPU and Memory allocations
     cpuLoadTarget = drift(0.75, 0.60, 0.85, 0.1);
     currentHeapUsed += (8 * 1024 * 1024); 
   }
 
-  // 3. DEPENDENT HARDWARE CALCS
-  currentRss = currentHeapUsed + (40 * 1024 * 1024); // RSS always trails Heap
-  // OS Load relies heavily on Node's CPU consumption
+  currentRss = currentHeapUsed + (40 * 1024 * 1024); 
   const osLoad1m = (cpuLoadTarget * 6) + drift(0.5, 0.1, 1.2, 0.2); 
 
   let totalUsConsumed = 1000000 * cpuLoadTarget;
@@ -90,11 +81,12 @@ export const generateSimulatedMetrics = (): TelemetryPayload => {
   lastCpuSystemUs += totalUsConsumed * 0.2; 
 
   const heapTotal = currentHeapUsed * 1.3; 
+  const finalCpuPercent = parseFloat((cpuLoadTarget * 100).toFixed(1));
 
   return {
     timeSeries: {
       cpuUsage: { user: Math.round(lastCpuUserUs), system: Math.round(lastCpuSystemUs) }, 
-      cpuPercent: parseFloat((cpuLoadTarget * 100).toFixed(1)), 
+      cpuPercent: finalCpuPercent, 
       rss: Math.round(currentRss), 
       heapUsed: Math.round(currentHeapUsed), 
       eventLoopLag: parseFloat(currentEventLoopLag.toFixed(2)), 

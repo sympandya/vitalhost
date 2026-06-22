@@ -47,8 +47,17 @@ export function TelemetryChart({ title, labels, dataPoints, borderColor, backgro
     },
     scales: {
       x: {
+        display: true,
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-        ticks: { color: 'rgba(255, 255, 255, 0.5)', maxTicksLimit: 10 },
+        ticks: { 
+          color: '#737373',
+          font: { family: 'monospace', size: 10 },
+          maxRotation: 45,
+          minRotation: 45,
+          autoSkip: true,
+          maxTicksLimit: 12,
+          includeBounds: true // <--- THIS FORCES THE LAST LABEL TO RENDER
+        }
       },
       y: {
         grid: { color: 'rgba(255, 255, 255, 0.05)' },

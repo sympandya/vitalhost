@@ -1,12 +1,13 @@
-// src/App.tsx
+// client/src/App.tsx
 import { useEffect, useState } from 'react';
 import { useTelemetryStore } from './store/useTelemetryStore';
 import { DashboardHeader } from './components/DashboardHeader';
 import { TimeSeriesGrid } from './components/TimeSeriesGrid';
 import { DeepTelemetryGrid } from './components/DeepTelemetryGrid';
+import { IncidentModal } from './components/ui/IncidentModal';
 
 function App() {
-  const { latest, updateTelemetry } = useTelemetryStore();
+  const { latest, updateTelemetry, setIncidentReport } = useTelemetryStore();
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
 
   useEffect(() => {
@@ -16,7 +17,28 @@ function App() {
     const connect = () => {
       ws = new WebSocket('ws://localhost:3000');
       ws.onopen = () => setConnectionStatus('🟢 Live (1Hz)');
-      ws.onmessage = (event) => updateTelemetry(JSON.parse(event.data));
+      
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'TELEMETRY') {
+          updateTelemetry(message.data);
+        } 
+        else if (message.timeSeries) {
+          updateTelemetry(message); // Fallback for raw data
+        } 
+        else if (message.type === 'AI_INCIDENT_START') {
+          setIncidentReport({
+             trigger: message.data.trigger,
+             analysis: "Analyzing system logs... please wait.",
+             timestamp: message.data.timestamp
+          });
+        }
+        else if (message.type === 'AI_INCIDENT_REPORT') {
+          setIncidentReport(message.data);
+        }
+      };
+      
       ws.onclose = () => {
         setConnectionStatus('🔴 Offline - Retrying...');
         reconnectTimer = setTimeout(connect, 3000);
@@ -33,16 +55,16 @@ function App() {
       clearTimeout(reconnectTimer);
       if (ws) {
         ws.onclose = null;
-        // Only close if it is fully connected (readyState 1)
         if (ws.readyState === 1) {
           ws.close();
         }
       }
     };
-  }, [updateTelemetry]);
+  }, [updateTelemetry, setIncidentReport]);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-6 font-mono">
+      <IncidentModal />
       <DashboardHeader connectionStatus={connectionStatus} />
 
       {!latest ? (

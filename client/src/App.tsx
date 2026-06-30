@@ -1,5 +1,6 @@
 // client/src/App.tsx
 import { useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { useTelemetryStore } from './store/useTelemetryStore';
 import { DashboardHeader } from './components/DashboardHeader';
 import { TimeSeriesGrid } from './components/TimeSeriesGrid';
@@ -77,6 +78,7 @@ function App() {
           <DeepTelemetryGrid />
         </div>
       )}
+      <Analytics />
     </div>
   );
 }
